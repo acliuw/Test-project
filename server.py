@@ -2,7 +2,8 @@ import http.server
 import json
 import simplejson
 import urllib
-from chatbot import GHBot
+from chatbot import *
+
 
 class Handler(http.server.BaseHTTPRequestHandler):
 	def do_POST(self):
@@ -23,7 +24,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 
 
-ghbot = GHBot("IAmGithubBot", "1ad406c491b6391cf48fa8e79e3cbc9475e28f56")
+ghbot = GHBot("IAmGithubBot")
 
 server = http.server.HTTPServer(('', 8000), Handler)
 server.serve_forever()

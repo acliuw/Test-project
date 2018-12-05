@@ -1,27 +1,32 @@
 import requests
 import subprocess
 import json
-
+from MarkovModel import *
 
 class GHBot:
-	def __init__(self, username, oauthToken):
+	def __init__(self, username):
 		self.username = username;
-		self.oauthToken = oauthToken;
-		self.authHeaders = {'Authorization': 'token %s' % oauthToken, 'Accept': 'application/vnd.github.v3+json'};
+		self.oauthToken = self.loadAuthToken();
+		self.authHeaders = {'Authorization': 'token %s' % self.oauthToken, 'Accept': 'application/vnd.github.v3+json'};
+		
+		# The current responses are randomly generated.
+		self.markovModel = MarkovModel("textdata/one-star-amazon-video-games.txt")
 
+	## - Update the internal state of the bot. 
+	## - Called after every time a comment is posted.
+	## - data is the JSON data describing the event. 
+	## - ** Currently a stub. 
 
-	## This method is called after every 'event', such as when someone comments. 
-	## data is the JSON data describing the event. 
-	## Currently a stub. 
 	def update(self, data):
 		print("GHBot.update called")
 		print(data)
 		pass
 
 
-	## This is called after each event. The bot should determine how to react to the current state
-	## of the repository. 
-	## Right now, the bot always responds with a fixed message. 
+	## - The bot should decide how to react to each event. 
+	## - data is the JSON data describing the event.  
+	## - Currently responds with a randomly generated phrase from a Markov model.
+
 	def react(self, data): 
 		print("GHBot.react called")
 
@@ -29,17 +34,35 @@ class GHBot:
 		if data["comment"]["user"]["login"] != self.username:
 			self.respond("UPF", data)
 
-		
+	
+	## - Responds to a comment with a random Markov generated comment. 
+
 	def respond(self, symlog, data): 
 		print("GHBot.respond", symlog, "called")
 		
+
 		url = data['issue']['url']
-		self.create_issue_comment_with_url(url, symlog)
+
+		# message = "" 
+		# for i in range(3):
+		# 	message += self.markovModel.generateMarkovChain() + " "
+
+		message = self.get_last_comment(data)
+		
+		print(self.get_all_comments_on_issue(data))
+
+		self.create_issue_comment_with_url(url, message)
+
+	## - Load the bot's auth token from a file. 
+	## - DO NOT COMMIT THE AUTH TOKEN FILE (git ignore it). 
+
+	def loadAuthToken(self):
+		authToken = open(self.username, "r").read()
+		return authToken
 
 
 
-
-##================== ISSUES ===================##
+##================== UTILITIES ===================##
 	def create_issue_comment_with_url(self, url, message):
 		postURL = "%s/comments" %(url)
 		r = requests.post(postURL, headers = self.authHeaders, data = json.dumps({ "body": message }))
@@ -114,10 +137,26 @@ class GHBot:
 			print("POST request failed")
 			print(r)
 
-#ghbot = GHBot("acliuw", "90ad3fbbfb6ed3c3bc8d30a395d9430fb1aff5ae")
-#ghbot.create_issue_comment("https://api.github.com/repos/acliuw/Test-project/", 1, "This message was automatically generated")
-#ghbot.create_issue("https://api.github.com/repos/acliuw/Test-project", "I have an issue!", "This issue was created by a bot.")
-#ghbot.open_issue("https://api.github.com/repos/acliuw/Test-project", 2)
+	def get_last_comment(self, data):
+		r = requests.get(data['comment']['url'], headers = self.authHeaders)
+		
+		if r.status_code == 200:
+			print("Success")
+			return r.json()['body']
+		else:
+			print("GET request failed")
+			print(r)
+
+	def get_all_comments_on_issue(self, data):
+		r = requests.get(data['issue']['url'] + "/comments", headers = self.authHeaders)
+
+		if r.status_code == 200:
+			print("Success")
+			return r.json()
+		else:
+			print("GET request failed")
+			print(r)
+
 
 
 
