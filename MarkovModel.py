@@ -118,7 +118,3 @@ class MarkovModel:
 				sample.append(each)
 		return choice(sample)
 
-mm = MarkovModel("textdata/five-star-amazon-video-games.txt")
-for i in range(25):
-	print(mm.generateMarkovChain())
-

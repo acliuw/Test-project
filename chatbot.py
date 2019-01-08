@@ -6,7 +6,7 @@ from MarkovModel import *
 class GHBot:
 	def __init__(self, username):
 		self.username = username;
-		self.oauthToken = self.loadAuthToken();
+		self.oauthToken = self.loadAuthToken().strip();
 		self.authHeaders = {'Authorization': 'token %s' % self.oauthToken, 'Accept': 'application/vnd.github.v3+json'};
 		
 		# The current responses are randomly generated.
@@ -31,8 +31,12 @@ class GHBot:
 		print("GHBot.react called")
 
 		# Don't respond to your own posts (or it'll be an endless cycle)
-		if data["comment"]["user"]["login"] != self.username:
-			self.respond("UPF", data)
+
+		try:
+			if data["comment"]["user"]["login"] != self.username:
+				self.respond("UPF", data)
+		except:
+			print("Unknown request format")
 
 	
 	## - Responds to a comment with a random Markov generated comment. 
@@ -43,13 +47,13 @@ class GHBot:
 
 		url = data['issue']['url']
 
-		# message = "" 
-		# for i in range(3):
-		# 	message += self.markovModel.generateMarkovChain() + " "
+		message = "" 
+		for i in range(3):
+			message += self.markovModel.generateMarkovChain() + " "
 
-		message = self.get_last_comment(data)
-		
-		print(self.get_all_comments_on_issue(data))
+		# message = self.get_last_comment(data) ### This makes the bot respond with the last message on the thread.
+		 
+		# print(self.get_all_comments_on_issue(data))
 
 		self.create_issue_comment_with_url(url, message)
 

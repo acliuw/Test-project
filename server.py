@@ -26,5 +26,5 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 ghbot = GHBot("IAmGithubBot")
 
-server = http.server.HTTPServer(('', 8000), Handler)
+server = http.server.HTTPServer(('', 8080), Handler)
 server.serve_forever()
