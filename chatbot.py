@@ -10,7 +10,8 @@ class GHBot:
 		self.authHeaders = {'Authorization': 'token %s' % self.oauthToken, 'Accept': 'application/vnd.github.v3+json'};
 		
 		# The current responses are randomly generated.
-		self.markovModel = MarkovModel("textdata/one-star-amazon-video-games.txt")
+		self.markovModels = [MarkovModel("textdata/one-star-amazon-video-games.txt"), MarkovModel("textdata/five-star-amazon-video-games.txt"),MarkovModel("textdata/trump-speeches.txt"),MarkovModel("textdata/trump-tweets.txt")]
+		self.currentPersonality = 0 # Default is negative Amazon game reviews
 
 	## - Update the internal state of the bot. 
 	## - Called after every time a comment is posted.
@@ -19,8 +20,25 @@ class GHBot:
 
 	def update(self, data):
 		print("GHBot.update called")
-		print(data)
-		pass
+
+		try:
+			last_comment = self.get_last_comment(data).strip()
+			print(last_comment)
+		except:
+			return
+			
+		if last_comment == "negative amazon":
+			self.currentPersonality = 0
+			print("Switching to negative amazon reviews")
+		elif last_comment == "positive amazon":
+			self.currentPersonality = 1
+			print("Switching to positive amazon reviews")
+		elif last_comment == "trump speeches":
+			self.currentPersonality = 2
+			print("Switching to Trump speeches")
+		elif last_comment == "trump tweets":
+			self.currentPersonality = 3
+			print("Switching to Trump tweets")
 
 
 	## - The bot should decide how to react to each event. 
@@ -49,7 +67,7 @@ class GHBot:
 
 		message = "" 
 		for i in range(3):
-			message += self.markovModel.generateMarkovChain() + " "
+			message += self.markovModels[self.currentPersonality].generateMarkovChain() + " "
 
 		# message = self.get_last_comment(data) ### This makes the bot respond with the last message on the thread.
 		 
@@ -143,13 +161,14 @@ class GHBot:
 
 	def get_last_comment(self, data):
 		r = requests.get(data['comment']['url'], headers = self.authHeaders)
-		
+
 		if r.status_code == 200:
 			print("Success")
 			return r.json()['body']
 		else:
 			print("GET request failed")
-			print(r)
+			print(r)		
+#r = requests.get(data['issue']['url'], 
 
 	def get_all_comments_on_issue(self, data):
 		r = requests.get(data['issue']['url'] + "/comments", headers = self.authHeaders)
